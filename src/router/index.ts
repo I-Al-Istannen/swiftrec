@@ -1,23 +1,28 @@
 import Vue from "vue";
-import VueRouter, { RouteConfig } from "vue-router";
-import Home from "../views/Home.vue";
+import VueRouter from "vue-router";
+import Home from "@/views/Home.vue";
 
 Vue.use(VueRouter);
 
-const routes: Array<RouteConfig> = [
+type RouteConfigEx = {
+  path: string;
+  name: string;
+  component: typeof Vue;
+  meta: {
+    title: string;
+    navigable: boolean;
+  };
+};
+
+export const routes: RouteConfigEx[] = [
   {
     path: "/",
-    name: "Home",
-    component: Home
-  },
-  {
-    path: "/about",
-    name: "About",
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () =>
-      import(/* webpackChunkName: "about" */ "../views/About.vue")
+    name: "home",
+    component: Home,
+    meta: {
+      title: "Heimat",
+      navigable: true
+    }
   }
 ];
 
@@ -25,6 +30,10 @@ const router = new VueRouter({
   mode: "history",
   base: process.env.BASE_URL,
   routes
+});
+
+router.afterEach(to => {
+  document.title = "SwiftRec - " + to.meta.title;
 });
 
 export default router;

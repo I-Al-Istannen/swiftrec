@@ -1,0 +1,1 @@
+/home/i_al_istannen/Programming/Uni/kit-calendar/frontend/src/shims-t-vue.d.ts
