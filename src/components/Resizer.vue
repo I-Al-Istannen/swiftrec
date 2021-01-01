@@ -79,6 +79,8 @@ export default class Resizer extends Vue {
       return;
     }
 
+    e.stopPropagation();
+
     document.documentElement.addEventListener("mouseup", this.mouseUp);
     document.documentElement.addEventListener("mousemove", this.mouseMove);
   }
@@ -151,10 +153,10 @@ export default class Resizer extends Vue {
 }
 .resizer {
   position: relative;
-  margin: 1px;
+  padding: 1px;
 }
 .resizer:hover {
-  margin: 0;
+  padding: 0;
   border: 1px solid var(--color-primary);
 }
 
