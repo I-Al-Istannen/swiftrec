@@ -2,16 +2,20 @@
   <t-container>
     <t-row>
       <t-col cols="12">
-        <resizer
-          v-if="myStream && streamDimensions"
-          :width="webcamSize.width"
-          :height="webcamSize.height"
-          :max-height="streamDimensions.height"
-          :max-width="streamDimensions.width"
-          @resize="webcamSize = { width: $event.width, height: $event.height }"
-        >
-          <media-stream-display :stream="myStream"></media-stream-display>
-        </resizer>
+        <absolute-positioning-pane>
+          <resizer
+            v-if="myStream && streamDimensions"
+            :width="webcamSize.width"
+            :height="webcamSize.height"
+            :max-height="streamDimensions.height"
+            :max-width="streamDimensions.width"
+            @resize="
+              webcamSize = { width: $event.width, height: $event.height }
+            "
+          >
+            <media-stream-display :stream="myStream"></media-stream-display>
+          </resizer>
+        </absolute-positioning-pane>
       </t-col>
     </t-row>
   </t-container>
@@ -26,9 +30,17 @@ import TCol from "@/components/TCol.vue";
 import MediaStreamDisplay from "@/components/MediaStreamDisplay.vue";
 import { getWebcam, streamDimensions } from "@/util/MediaUtil";
 import Resizer from "@/components/Resizer.vue";
+import AbsolutePositioningPane from "@/components/AbsolutePositioningPane.vue";
 
 @Component({
-  components: { Resizer, MediaStreamDisplay, TCol, TRow, TContainer }
+  components: {
+    AbsolutePositioningPane,
+    Resizer,
+    MediaStreamDisplay,
+    TCol,
+    TRow,
+    TContainer
+  }
 })
 export default class Home extends Vue {
   private myStream: MediaStream | null = null;
