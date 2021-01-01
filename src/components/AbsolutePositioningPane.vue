@@ -4,6 +4,7 @@
     ref="root"
     @mousedown="mouseDown"
     @mousemove="mouseMove"
+    :style="{ width: this.width + 'px', height: this.height + 'px' }"
   >
     <slot></slot>
   </div>
@@ -13,6 +14,7 @@
 import Vue from "vue";
 import Component from "vue-class-component";
 import TContainer from "./TContainer.vue";
+import { Prop } from "vue-property-decorator";
 
 type DragInformation = {
   target: HTMLElement;
@@ -27,6 +29,11 @@ type DragInformation = {
 })
 export default class AbsolutePositioningPane extends Vue {
   private dragInformation: DragInformation | null = null;
+
+  @Prop()
+  private readonly width!: number;
+  @Prop()
+  private readonly height!: number;
 
   private mouseDown(e: MouseEvent) {
     if (!e.target || !(e.target instanceof HTMLElement)) {
@@ -103,11 +110,9 @@ export default class AbsolutePositioningPane extends Vue {
 
 <style scoped>
 .absolute-positioning-pane {
-  width: 100%;
-  height: 100%;
   position: relative;
 }
 .absolute-positioning-pane > * {
-  position: relative;
+  position: absolute;
 }
 </style>

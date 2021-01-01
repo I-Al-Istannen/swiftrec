@@ -153,11 +153,7 @@ export default class Resizer extends Vue {
 }
 .resizer {
   position: relative;
-  padding: 1px;
-}
-.resizer:hover {
-  padding: 0;
-  border: 1px solid var(--color-primary);
+  border: 2px solid var(--color-primary);
 }
 
 .resizer::after {
