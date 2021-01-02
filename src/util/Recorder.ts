@@ -15,15 +15,17 @@ export default class Recorder {
   private readonly screenLocation: Location;
   private readonly screenStream: MediaStream;
   private readonly webcamStream: MediaStream | null;
-  private readonly finishCallback: (blob: Blob) => void;
+  private readonly finishCallback: (blob?: Blob) => void;
   private readonly chunks: Blob[];
+  private readonly streamToFile: boolean;
   private isRecording: boolean;
 
   constructor(
     webcamLocation: Location,
     screenStream: MediaStream,
     webcamStream: MediaStream | null,
-    finishCallback: (blob: Blob) => void
+    finishCallback: (blob?: Blob) => void,
+    streamToFile: boolean
   ) {
     this.webcamLocation = webcamLocation;
     this.screenStream = screenStream;
@@ -31,6 +33,7 @@ export default class Recorder {
     this.finishCallback = finishCallback;
     this.chunks = [];
     this.isRecording = false;
+    this.streamToFile = streamToFile;
 
     this.screenLocation = {
       x: 0,
@@ -68,9 +71,38 @@ export default class Recorder {
       videoBitsPerSecond: 9000000
     });
 
-    const writableStream = streamSaver.createWriteStream(
-      new Date().toLocaleString().replace(/[^0-9]/, "-") + ".webm"
-    );
+    if (this.streamToFile) {
+      this.startStreamToFile();
+    } else {
+      this.recorder.ondataavailable = event => {
+        this.chunks.push(event.data);
+      };
+    }
+
+    this.recorder.onstop = () => {
+      this.isRecording = false;
+      if (this.streamToFile) {
+        this.finishCallback(undefined);
+      } else {
+        this.finishCallback(
+          new Blob(this.chunks, { type: this.chunks[0].type })
+        );
+      }
+    };
+    this.isRecording = true;
+
+    this.recorder.start();
+  }
+
+  private startStreamToFile() {
+    const now = new Date();
+    let fileName = now.getFullYear() + "-" + (now.getMonth() + 1);
+    fileName += "-" + now.getDate();
+    fileName += " ";
+    fileName += now.getHours() + " " + now.getMinutes();
+    fileName += ".webm";
+
+    const writableStream = streamSaver.createWriteStream(fileName);
 
     this.recorder.ondataavailable = event => {
       // less optimized
@@ -86,13 +118,6 @@ export default class Recorder {
 
       pump();
     };
-    this.recorder.onstop = () => {
-      this.isRecording = false;
-      this.finishCallback(new Blob(this.chunks, { type: this.chunks[0].type }));
-    };
-    this.isRecording = true;
-
-    this.recorder.start();
   }
 
   private drawToCanvas(canvasCtx: CanvasRenderingContext2D) {

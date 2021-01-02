@@ -91,7 +91,8 @@ export default class RecordingPane extends Vue {
         this.webcamPosition || { x: 0, y: 0, width: 0, height: 0 },
         this.screenshare,
         this.webcamStream,
-        blob => (this.resultBlob = blob)
+        blob => (this.resultBlob = blob),
+        true
       );
       this.recorder.startRecording();
     }
