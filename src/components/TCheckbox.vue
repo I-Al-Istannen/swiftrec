@@ -1,22 +1,50 @@
 <template>
-  <label>
-    <input type="checkbox" :checked="checked" @click="onClick" />
-    <span class="fake-box">
-      <span></span>
+  <div class="d-inline-block" style="flex-direction: column">
+    <label>
+      <input type="checkbox" :checked="checked" @click="onClick" />
+      <span class="fake-box">
+        <span></span>
+      </span>
+      <slot></slot>
+    </label>
+    <span class="text-error">
+      {{ validationResult }}
     </span>
-    <slot></slot>
-  </label>
+  </div>
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
-import { Model } from "vue-property-decorator";
+import Component, { mixins } from "vue-class-component";
+import { Model, Prop, Watch } from "vue-property-decorator";
+import ValidatableMixin from "@/mixins/ValidatableMixin.vue";
 
 @Component
-export default class TCheckbox extends Vue {
+export default class TCheckbox extends mixins(ValidatableMixin) {
   @Model("checked", { default: true })
   private readonly checked!: boolean;
+
+  @Prop({ default: () => [] })
+  private readonly rules!: ((input: boolean) => string | null)[];
+
+  @Watch("checked")
+  private updateValidator() {
+    this.validator.validate();
+  }
+
+  validate(): boolean {
+    return this.validationResult === null;
+  }
+
+  private get validationResult(): string | null {
+    for (const rule of this.rules) {
+      const result = rule(this.checked);
+      if (result) {
+        return result;
+      }
+    }
+
+    return null;
+  }
 
   private onClick(e: MouseEvent) {
     const target = e.target as HTMLInputElement;
@@ -53,5 +81,9 @@ input[type="checkbox"] {
 }
 input[type="checkbox"]:checked + .fake-box > span {
   background-color: var(--color-accent);
+}
+
+.text-error {
+  font-size: 13px;
 }
 </style>

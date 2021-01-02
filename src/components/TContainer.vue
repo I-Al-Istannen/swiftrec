@@ -17,11 +17,15 @@ export default class TContainer extends Vue {
   @Prop({ default: false, type: Boolean })
   private readonly noGutter!: boolean;
 
+  @Prop({ default: false, type: Boolean })
+  private readonly wrap!: boolean;
+
   private get computedClass() {
     return {
       fluid: this.fluid,
       "t-container": true,
-      "no-gutters": this.noGutter
+      "no-gutters": this.noGutter,
+      wrap: this.wrap
     };
   }
 }
@@ -37,6 +41,10 @@ export default class TContainer extends Vue {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+}
+.t-container.wrap {
+  width: max-content;
+  max-width: 100%;
 }
 .t-container.fluid {
   max-width: 100%;

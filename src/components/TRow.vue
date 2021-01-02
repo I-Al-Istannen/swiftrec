@@ -17,11 +17,15 @@ export default class TRow extends Vue {
   @Prop({ default: false, type: Boolean })
   private readonly alignLeft!: boolean;
 
+  @Prop({ default: false, type: Boolean })
+  private readonly wrap!: boolean;
+
   private get computedClass() {
     return {
       "no-gutters": this.noGutters,
       "t-row": true,
-      "align-left": this.alignLeft
+      "align-left": this.alignLeft,
+      wrap: this.wrap
     };
   }
 }
@@ -36,6 +40,9 @@ export default class TRow extends Vue {
   flex: 1 1 auto;
   margin: 0.5ch 0;
   width: 100%;
+}
+.t-row.wrap {
+  max-width: max-content;
 }
 .t-row.align-left {
   justify-content: start;
