@@ -9,7 +9,7 @@ export default class Recorder {
   private webcamLocation: Location;
   private readonly screenLocation: Location;
   private readonly screenStream: MediaStream;
-  private readonly webcamStream: MediaStream;
+  private readonly webcamStream: MediaStream | null;
   private readonly finishCallback: (blob: Blob) => void;
   private readonly chunks: Blob[];
   private isRecording: boolean;
@@ -17,7 +17,7 @@ export default class Recorder {
   constructor(
     webcamLocation: Location,
     screenStream: MediaStream,
-    webcamStream: MediaStream,
+    webcamStream: MediaStream | null,
     finishCallback: (blob: Blob) => void
   ) {
     this.webcamLocation = webcamLocation;
@@ -47,11 +47,15 @@ export default class Recorder {
       throw Error("Sad");
     }
 
-    const audioTrack = this.webcamStream.getAudioTracks()[0];
+    const audioTrack = this.webcamStream
+      ? this.webcamStream.getAudioTracks()[0]
+      : undefined;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const canvasStream: MediaStream = (targetCanvas as any).captureStream();
-    canvasStream.addTrack(audioTrack);
+    if (audioTrack) {
+      canvasStream.addTrack(audioTrack);
+    }
 
     this.drawToCanvas(canvasCtx);
 
@@ -76,10 +80,16 @@ export default class Recorder {
     screenVideo.srcObject = this.screenStream;
     screenVideo.muted = true;
     screenVideo.play();
-    const webcamVideo = document.createElement("video");
-    webcamVideo.srcObject = this.webcamStream;
-    webcamVideo.muted = true;
-    webcamVideo.play();
+
+    let webcamVideo: HTMLVideoElement | undefined;
+    if (this.webcamStream) {
+      webcamVideo = document.createElement("video");
+      webcamVideo.srcObject = this.webcamStream;
+      webcamVideo.muted = true;
+      webcamVideo.play();
+    } else {
+      webcamVideo = undefined;
+    }
 
     const animationCallback = () => {
       canvasCtx.drawImage(
@@ -90,18 +100,22 @@ export default class Recorder {
         this.screenLocation.height
       );
 
-      canvasCtx.drawImage(
-        webcamVideo,
-        this.webcamLocation.x,
-        this.webcamLocation.y,
-        this.webcamLocation.width,
-        this.webcamLocation.height
-      );
+      if (webcamVideo) {
+        canvasCtx.drawImage(
+          webcamVideo,
+          this.webcamLocation.x,
+          this.webcamLocation.y,
+          this.webcamLocation.width,
+          this.webcamLocation.height
+        );
+      }
 
       if (this.isRecording) {
         window.requestAnimationFrame(animationCallback);
       } else {
-        webcamVideo.pause();
+        if (webcamVideo) {
+          webcamVideo.pause();
+        }
         screenVideo.pause();
       }
     };

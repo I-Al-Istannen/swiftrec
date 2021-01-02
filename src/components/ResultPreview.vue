@@ -42,9 +42,13 @@ export default class ResultPreview extends Vue {
   @Model("webcam-position")
   private readonly webcamPosition!: ElementPosition | null;
   @Prop()
-  private readonly webcamStream!: MediaStream;
+  private readonly webcamStream!: MediaStream | null;
 
   private get webcamStreamSize() {
+    // We have no webcam, so just say it is 0 pixels large
+    if (!this.webcamStream) {
+      return { width: 0, height: 0 };
+    }
     return streamDimensions(this.webcamStream);
   }
 
