@@ -14,31 +14,34 @@ export default class Recorder {
   private webcamLocation: Location;
   private readonly screenLocation: Location;
   private readonly screenStream: MediaStream;
-  private readonly webcamStream: MediaStream | null;
+  private readonly webcamStream?: MediaStream;
+  private readonly microphoneTrack?: MediaStreamTrack;
   private readonly finishCallback: (blob?: Blob) => void;
   private readonly chunks: Blob[];
   private readonly streamToFile: boolean;
   private isRecording: boolean;
 
-  constructor(
-    webcamLocation: Location,
-    screenStream: MediaStream,
-    webcamStream: MediaStream | null,
-    finishCallback: (blob?: Blob) => void,
-    streamToFile: boolean
-  ) {
-    this.webcamLocation = webcamLocation;
-    this.screenStream = screenStream;
-    this.webcamStream = webcamStream;
-    this.finishCallback = finishCallback;
+  constructor(options: {
+    webcamLocation: Location;
+    screenStream: MediaStream;
+    webcamStream?: MediaStream;
+    microphoneTrack?: MediaStreamTrack;
+    finishCallback: (blob?: Blob) => void;
+    streamToFile: boolean;
+  }) {
+    this.webcamLocation = options.webcamLocation;
+    this.screenStream = options.screenStream;
+    this.webcamStream = options.webcamStream;
+    this.finishCallback = options.finishCallback;
     this.chunks = [];
     this.isRecording = false;
-    this.streamToFile = streamToFile;
+    this.streamToFile = options.streamToFile;
+    this.microphoneTrack = options.microphoneTrack;
 
     this.screenLocation = {
       x: 0,
       y: 0,
-      ...streamDimensions(screenStream)
+      ...streamDimensions(options.screenStream)
     };
   }
 
@@ -55,9 +58,7 @@ export default class Recorder {
       throw Error("Sad");
     }
 
-    const audioTrack = this.webcamStream
-      ? this.webcamStream.getAudioTracks()[0]
-      : undefined;
+    const audioTrack = this.microphoneTrack;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const canvasStream: MediaStream = (targetCanvas as any).captureStream();

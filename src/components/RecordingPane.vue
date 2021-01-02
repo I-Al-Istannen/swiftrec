@@ -6,8 +6,10 @@
           {{ recorder ? "[Stop Recording]" : "[Start Recording]" }}
         </t-button>
       </t-col>
-      <t-col v-if="blobDownloadLink">
-        <a :href="blobDownloadLink">Click me</a>
+      <t-col v-if="blobDownloadLink" class="ml-2">
+        <a :href="blobDownloadLink" download="Recording.webm">
+          [Save Recording]
+        </a>
       </t-col>
     </t-row>
     <t-row no-gutters>
@@ -44,14 +46,16 @@ export default class RecordingPane extends Vue {
   private webcamPosition: ElementPosition | null = null;
   private recorder: Recorder | null = null;
   private resultBlob: Blob | null = null;
-  // Set in mounted
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private containerWidth: number | null = null;
 
   @Prop()
   private readonly webcamStream!: MediaStream | null;
   @Prop()
+  private readonly microphoneTrack!: MediaStreamTrack | null;
+  @Prop()
   private readonly screenshare!: MediaStream;
+  @Prop()
+  private readonly streamToFile!: boolean;
 
   private get blobDownloadLink() {
     if (!this.resultBlob) {
@@ -87,13 +91,19 @@ export default class RecordingPane extends Vue {
       this.recorder = null;
     } else {
       this.resultBlob = null;
-      this.recorder = new Recorder(
-        this.webcamPosition || { x: 0, y: 0, width: 0, height: 0 },
-        this.screenshare,
-        this.webcamStream,
-        blob => (this.resultBlob = blob),
-        true
-      );
+      this.recorder = new Recorder({
+        webcamLocation: this.webcamPosition || {
+          x: 0,
+          y: 0,
+          width: 0,
+          height: 0
+        },
+        screenStream: this.screenshare,
+        webcamStream: this.webcamStream || undefined,
+        finishCallback: blob => (this.resultBlob = blob || null),
+        streamToFile: this.streamToFile,
+        microphoneTrack: this.microphoneTrack || undefined
+      });
       this.recorder.startRecording();
     }
   }

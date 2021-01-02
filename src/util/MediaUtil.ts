@@ -1,6 +1,11 @@
 export async function getWebcam(): Promise<MediaStream> {
   return await navigator.mediaDevices.getUserMedia({
-    video: true,
+    video: true
+  });
+}
+
+export async function getMicrophone(): Promise<MediaStream> {
+  return await navigator.mediaDevices.getUserMedia({
     audio: true
   });
 }
