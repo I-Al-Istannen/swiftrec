@@ -6,7 +6,7 @@
     @element-moved="elementMoved"
   >
     <resizer
-      class="absolute-resizer"
+      class="absolute-resizer absolute-movable"
       style="z-index: 10"
       :width="effectiveWebcamPosition.width"
       :height="effectiveWebcamPosition.height"

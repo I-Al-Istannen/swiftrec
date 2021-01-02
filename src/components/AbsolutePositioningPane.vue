@@ -49,7 +49,7 @@ export default class AbsolutePositioningPane extends Vue {
       target = target.parentElement;
     }
 
-    if (!target) {
+    if (!target || !target.classList.contains("absolute-movable")) {
       return;
     }
 
