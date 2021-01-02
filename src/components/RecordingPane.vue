@@ -11,6 +11,15 @@
           [Save Recording]
         </a>
       </t-col>
+      <t-col class="ml-6">
+        <t-button
+          color="warning"
+          @click="restart"
+          title="Brings you back to the home screen"
+        >
+          [Change Settings]
+        </t-button>
+      </t-col>
     </t-row>
     <t-row no-gutters>
       <t-col>
@@ -116,6 +125,14 @@ export default class RecordingPane extends Vue {
       root.getBoundingClientRect().width * 0.8,
       width
     );
+  }
+
+  private restart() {
+    if (
+      window.confirm("Do you really want to restart the capturing process?")
+    ) {
+      this.$emit("restart");
+    }
   }
 
   private mounted() {

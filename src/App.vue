@@ -107,6 +107,9 @@ a.router-link-exact-active.concealed-router-link {
 .mr-6 {
   margin-right: 24px;
 }
+.ml-6 {
+  margin-left: 24px;
+}
 .mb-2 {
   margin-bottom: 8px;
 }

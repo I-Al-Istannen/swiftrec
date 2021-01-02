@@ -11,6 +11,7 @@
     <t-row v-if="screenshare">
       <t-col cols="12">
         <recording-pane
+          @restart="deinit"
           :webcam-stream="webcamStream"
           :screenshare="screenshare"
           :stream-to-file="streamToFile"
@@ -46,7 +47,7 @@
       </t-row>
       <t-row no-gutters>
         <t-col>
-          <t-button @click="init">[Init]</t-button>
+          <t-button @click="init">[Continue]</t-button>
         </t-col>
       </t-row>
     </t-row>
@@ -95,6 +96,25 @@ export default class Home extends Vue {
   private useMicrophone = true;
   private useWebcam = true;
   private errors: Error[] = [];
+
+  private deinit() {
+    if (this.webcamStream) {
+      this.webcamStream.getTracks().forEach(it => it.stop());
+    }
+    this.webcamStream = null;
+
+    if (this.screenshare) {
+      this.screenshare.getTracks().forEach(it => it.stop());
+    }
+    this.screenshare = null;
+
+    if (this.microphoneTrack) {
+      this.microphoneTrack.stop();
+    }
+    this.microphoneTrack = null;
+
+    this.errors = [];
+  }
 
   private async init() {
     this.errors = [];
