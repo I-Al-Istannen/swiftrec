@@ -1,5 +1,13 @@
 <template>
   <t-container fluid>
+    <t-row no-gutters v-if="errors.length > 0">
+      <t-col>
+        <div v-for="error in errors" :keY="error.component">
+          <span class="text-error">{{ error.component }}</span>
+          {{ error.message }}
+        </div>
+      </t-col>
+    </t-row>
     <t-row v-if="screenshare">
       <t-col cols="12">
         <recording-pane
@@ -60,6 +68,11 @@ import ResultPreview from "@/components/ResultPreview.vue";
 import RecordingPane from "@/components/RecordingPane.vue";
 import TCheckbox from "@/components/TCheckbox.vue";
 
+type Error = {
+  component: string;
+  message: string;
+};
+
 @Component({
   components: {
     TCheckbox,
@@ -81,26 +94,44 @@ export default class Home extends Vue {
   private streamToFile = true;
   private useMicrophone = true;
   private useWebcam = true;
+  private errors: Error[] = [];
 
   private async init() {
+    this.errors = [];
     if (this.useWebcam) {
-      try {
-        this.webcamStream = await getWebcam();
-      } catch (e) {
-        console.log(e);
-      }
+      await this.doWithError("Webcam", () =>
+        getWebcam().then(it => (this.webcamStream = it))
+      );
     }
     if (this.useMicrophone) {
-      try {
-        const micStream = await getMicrophone();
-        if (micStream) {
-          this.microphoneTrack = micStream.getAudioTracks()[0];
-        }
-      } catch (e) {
-        console.log(e);
-      }
+      await this.doWithError("Microphone", () =>
+        getMicrophone().then(micStream => {
+          if (micStream) {
+            this.microphoneTrack = micStream.getAudioTracks()[0];
+          }
+        })
+      );
     }
-    this.screenshare = await getScreen();
+    await this.doWithError("Screenshare", () =>
+      getScreen().then(it => (this.screenshare = it))
+    );
+  }
+
+  private async doWithError(component: string, func: () => Promise<unknown>) {
+    try {
+      await func();
+    } catch (e) {
+      this.errors.push({ component: component, message: e.message });
+    }
   }
 }
 </script>
+
+<style scoped>
+.text-error {
+  white-space: pre-line;
+  min-width: 15ch;
+  text-align: end;
+  display: inline-block;
+}
+</style>
