@@ -1,11 +1,12 @@
 import { streamDimensions } from "@/util/MediaUtil";
+import { ElementPosition } from "@/store/Types";
 
 export type Location = { x: number; y: number; width: number; height: number };
 
 export default class Recorder {
   private recorder!: MediaRecorder;
 
-  private readonly webcamLocation: Location;
+  private webcamLocation: Location;
   private readonly screenLocation: Location;
   private readonly screenStream: MediaStream;
   private readonly webcamStream: MediaStream;
@@ -62,7 +63,6 @@ export default class Recorder {
       this.chunks.push(event.data);
     };
     this.recorder.onstop = () => {
-      console.log("Stopped, calling callback");
       this.isRecording = false;
       this.finishCallback(new Blob(this.chunks, { type: this.chunks[0].type }));
     };
@@ -107,6 +107,10 @@ export default class Recorder {
     };
 
     window.requestAnimationFrame(animationCallback);
+  }
+
+  public setWebcamLocation(location: ElementPosition) {
+    this.webcamLocation = location;
   }
 
   public stopRecording() {

@@ -3,13 +3,15 @@
     style="border: 2px solid var(--color-warning)"
     :width="screenshareSize.width"
     :height="screenshareSize.height"
+    @element-moved="elementMoved"
   >
     <resizer
+      class="absolute-resizer"
       style="z-index: 10"
-      :width="webcamSize.width"
-      :height="webcamSize.height"
-      :max-height="webcamSize.height"
-      :max-width="webcamSize.width"
+      :width="effectiveWebcamPosition.width"
+      :height="effectiveWebcamPosition.height"
+      :max-height="webcamStreamSize.height"
+      :max-width="webcamStreamSize.width"
       @resize="webcamResized"
     >
       <media-stream-display :stream="webcamStream"></media-stream-display>
@@ -25,7 +27,8 @@ import MediaStreamDisplay from "@/components/MediaStreamDisplay.vue";
 import Resizer from "@/components/Resizer.vue";
 import AbsolutePositioningPane from "@/components/AbsolutePositioningPane.vue";
 import { ElementPosition, StreamSize } from "@/store/Types";
-import { Prop } from "vue-property-decorator";
+import { Model, Prop } from "vue-property-decorator";
+import { streamDimensions } from "@/util/MediaUtil";
 
 @Component({
   components: { AbsolutePositioningPane, Resizer, MediaStreamDisplay }
@@ -36,18 +39,81 @@ export default class ResultPreview extends Vue {
   @Prop()
   private readonly screenshareStream!: MediaStream;
 
-  @Prop()
-  private readonly webcamSize!: StreamSize;
+  @Model("webcam-position")
+  private readonly webcamPosition!: ElementPosition | null;
   @Prop()
   private readonly webcamStream!: MediaStream;
 
-  private webcamResized(newSize: StreamSize) {
-    const newPosition: ElementPosition = {
+  private get webcamStreamSize() {
+    return streamDimensions(this.webcamStream);
+  }
+
+  private get effectiveWebcamPosition() {
+    if (this.webcamPosition) {
+      return this.transformToLocal(this.webcamPosition);
+    }
+    return this.transformToLocal({
       x: 0,
       y: 0,
+      ...this.webcamStreamSize
+    });
+  }
+
+  private webcamResized(newSize: StreamSize) {
+    const newPosition: ElementPosition = {
+      x: this.effectiveWebcamPosition.x,
+      y: this.effectiveWebcamPosition.y,
       ...newSize
     };
-    this.$emit("webcam-position", newPosition);
+    this.$emit("webcam-position", this.transformToGlobal(newPosition));
   }
+
+  private elementMoved(elem: { target: HTMLElement; x: number; y: number }) {
+    if (!elem.target.classList.contains("absolute-resizer")) {
+      return;
+    }
+    this.$emit("webcam-position", {
+      width: this.effectiveWebcamPosition.width * this.previewWidthRatio,
+      height: this.effectiveWebcamPosition.height * this.previewHeightRatio,
+      x: elem.x * this.previewWidthRatio,
+      y: elem.y * this.previewHeightRatio
+    } as ElementPosition);
+  }
+
+  private created() {
+    this.$emit("webcam-position", this.effectiveWebcamPosition);
+  }
+
+  // <!--<editor-fold desc="Coordinate transformation">-->
+  private transformToLocal(global: ElementPosition): ElementPosition {
+    return {
+      x: global.x * (1 / this.previewWidthRatio),
+      y: global.y * (1 / this.previewHeightRatio),
+      width: global.width * (1 / this.previewWidthRatio),
+      height: global.height * (1 / this.previewHeightRatio)
+    };
+  }
+  private transformToGlobal(local: ElementPosition): ElementPosition {
+    return {
+      x: local.x * this.previewWidthRatio,
+      y: local.y * this.previewHeightRatio,
+      width: local.width * this.previewWidthRatio,
+      height: local.height * this.previewHeightRatio
+    };
+  }
+
+  private get previewWidthRatio() {
+    return (
+      streamDimensions(this.screenshareStream).width /
+      this.screenshareSize.width
+    );
+  }
+  private get previewHeightRatio() {
+    return (
+      streamDimensions(this.screenshareStream).height /
+      this.screenshareSize.height
+    );
+  }
+  // <!--</editor-fold>-->
 }
 </script>

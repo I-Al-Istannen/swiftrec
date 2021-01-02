@@ -1,6 +1,6 @@
 <template>
   <t-container fluid ref="root">
-    <t-row v-if="screenshare && myStream">
+    <t-row v-if="screenshare && webcamStream">
       <t-col>
         <t-button @click="toggleRecording">
           {{ recorder ? "[Stop Recording]" : "[Start Recording]" }}
@@ -13,13 +13,11 @@
     <t-row>
       <t-col>
         <result-preview
-          v-if="
-            webcamDimensions && myStream && screenshare && screenshareDimensions
-          "
+          v-if="webcamStream && screenshare && screenshareDimensions"
           :screenshare-size="screenshareDimensions"
           :screenshare-stream="screenshare"
-          :webcam-size="webcamDimensions"
-          :webcam-stream="myStream"
+          :webcam-stream="webcamStream"
+          v-model="webcamPosition"
         ></result-preview>
         <t-button v-else @click="init">[Init]</t-button>
       </t-col>
@@ -40,6 +38,8 @@ import AbsolutePositioningPane from "@/components/AbsolutePositioningPane.vue";
 import TButton from "@/components/TButton.vue";
 import Recorder from "@/util/Recorder";
 import ResultPreview from "@/components/ResultPreview.vue";
+import { ElementPosition } from "@/store/Types";
+import { Watch } from "vue-property-decorator";
 
 @Component({
   components: {
@@ -54,21 +54,11 @@ import ResultPreview from "@/components/ResultPreview.vue";
   }
 })
 export default class Home extends Vue {
-  private myStream: MediaStream | null = null;
+  private webcamStream: MediaStream | null = null;
   private screenshare: MediaStream | null = null;
-  private webcamSize: { width: number | null; height: number | null } = {
-    width: null,
-    height: null
-  };
+  private webcamPosition: ElementPosition | null = null;
   private recorder: Recorder | null = null;
   private resultBlob: Blob | null = null;
-
-  private get webcamDimensions() {
-    if (this.myStream) {
-      return streamDimensions(this.myStream);
-    }
-    return undefined;
-  }
 
   private get blobDownloadLink() {
     if (!this.resultBlob) {
@@ -95,8 +85,15 @@ export default class Home extends Vue {
     return undefined;
   }
 
+  @Watch("webcamPosition")
+  private onWebcamPositionUpdate() {
+    if (this.recorder && this.webcamPosition) {
+      this.recorder.setWebcamLocation(this.webcamPosition);
+    }
+  }
+
   private toggleRecording() {
-    if (!this.screenshare || !this.myStream || !this.webcamDimensions) {
+    if (!this.screenshare || !this.webcamStream) {
       return;
     }
     if (this.recorder) {
@@ -105,9 +102,9 @@ export default class Home extends Vue {
     } else {
       this.resultBlob = null;
       this.recorder = new Recorder(
-        { x: 0, y: 0, ...this.webcamDimensions },
+        this.webcamPosition || { x: 0, y: 0, width: 0, height: 0 },
         this.screenshare,
-        this.myStream,
+        this.webcamStream,
         blob => (this.resultBlob = blob)
       );
       this.recorder.startRecording();
@@ -115,7 +112,7 @@ export default class Home extends Vue {
   }
 
   private async init() {
-    this.myStream = await getWebcam();
+    this.webcamStream = await getWebcam();
     this.screenshare = await getScreen();
   }
 }

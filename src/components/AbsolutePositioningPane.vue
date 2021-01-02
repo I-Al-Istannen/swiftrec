@@ -22,6 +22,8 @@ type DragInformation = {
   startY: number;
   offsetX: number;
   offsetY: number;
+  currentX: number;
+  currentY: number;
 };
 
 @Component({
@@ -58,11 +60,20 @@ export default class AbsolutePositioningPane extends Vue {
       startX: e.offsetX,
       startY: e.offsetY,
       offsetX: e.offsetX,
-      offsetY: e.offsetY
+      offsetY: e.offsetY,
+      currentX: e.offsetX,
+      currentY: e.offsetY
     };
   }
 
   private mouseUp() {
+    if (this.dragInformation) {
+      this.$emit("element-moved", {
+        target: this.dragInformation.target,
+        x: this.dragInformation.currentX,
+        y: this.dragInformation.currentY
+      });
+    }
     this.dragInformation = null;
     document.documentElement.removeEventListener("mouseUp", this.mouseUp);
   }
@@ -104,6 +115,9 @@ export default class AbsolutePositioningPane extends Vue {
 
     this.dragInformation.target.style.left = newX + "px";
     this.dragInformation.target.style.top = newY + "px";
+
+    this.dragInformation.currentX = newX;
+    this.dragInformation.currentY = newY;
   }
 }
 </script>
