@@ -13,7 +13,7 @@
     "sourceMap": true,
     "baseUrl": ".",
     "types": [
-      "webpack-env", "dom-mediacapture-record"
+      "webpack-env", "dom-mediacapture-record", "streamsaver"
     ],
     "paths": {
       "@/*": [

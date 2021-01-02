@@ -1,5 +1,10 @@
 import { streamDimensions } from "@/util/MediaUtil";
 import { ElementPosition } from "@/store/Types";
+import streamSaver from "streamsaver";
+// eslint-disable-next-line
+// @ts-ignore
+import * as ponyfill from "web-streams-polyfill/ponyfill";
+streamSaver.WritableStream = ponyfill.WritableStream;
 
 export type Location = { x: number; y: number; width: number; height: number };
 
@@ -63,8 +68,23 @@ export default class Recorder {
       videoBitsPerSecond: 9000000
     });
 
+    const writableStream = streamSaver.createWriteStream(
+      new Date().toLocaleString().replace(/[^0-9]/, "-") + ".webm"
+    );
+
     this.recorder.ondataavailable = event => {
-      this.chunks.push(event.data);
+      // less optimized
+      const writer = writableStream.getWriter();
+      const reader = event.data.stream().getReader();
+      const pump = () => {
+        reader
+          .read()
+          .then(res =>
+            res.done ? writer.close() : writer.write(res.value).then(pump)
+          );
+      };
+
+      pump();
     };
     this.recorder.onstop = () => {
       this.isRecording = false;
