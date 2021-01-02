@@ -5,5 +5,4 @@ const VuexModule = createModule({
   strict: false
 });
 
-export class UserModule extends VuexModule {
-}
+export class UserModule extends VuexModule {}

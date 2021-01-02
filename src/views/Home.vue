@@ -1,31 +1,26 @@
 <template>
   <t-container fluid ref="root">
+    <t-row v-if="screenshare && myStream">
+      <t-col>
+        <t-button @click="toggleRecording">
+          {{ recorder ? "[Stop Recording]" : "[Start Recording]" }}
+        </t-button>
+      </t-col>
+      <t-col v-if="blobDownloadLink">
+        <a :href="blobDownloadLink">Click me</a>
+      </t-col>
+    </t-row>
     <t-row>
       <t-col>
-        <absolute-positioning-pane
-          style="border: 2px solid var(--color-warning)"
-          v-if="screenshareDimensions"
-          :width="screenshareDimensions.width"
-          :height="screenshareDimensions.height"
-        >
-          <resizer
-            style="z-index: 10"
-            v-if="myStream && webcamDimensions"
-            :width="webcamSize.width"
-            :height="webcamSize.height"
-            :max-height="webcamDimensions.height"
-            :max-width="webcamDimensions.width"
-            @resize="
-              webcamSize = { width: $event.width, height: $event.height }
-            "
-          >
-            <media-stream-display :stream="myStream"></media-stream-display>
-          </resizer>
-          <media-stream-display
-            v-if="screenshare"
-            :stream="screenshare"
-          ></media-stream-display>
-        </absolute-positioning-pane>
+        <result-preview
+          v-if="
+            webcamDimensions && myStream && screenshare && screenshareDimensions
+          "
+          :screenshare-size="screenshareDimensions"
+          :screenshare-stream="screenshare"
+          :webcam-size="webcamDimensions"
+          :webcam-stream="myStream"
+        ></result-preview>
         <t-button v-else @click="init">[Init]</t-button>
       </t-col>
     </t-row>
@@ -43,9 +38,12 @@ import { getScreen, getWebcam, streamDimensions } from "@/util/MediaUtil";
 import Resizer from "@/components/Resizer.vue";
 import AbsolutePositioningPane from "@/components/AbsolutePositioningPane.vue";
 import TButton from "@/components/TButton.vue";
+import Recorder from "@/util/Recorder";
+import ResultPreview from "@/components/ResultPreview.vue";
 
 @Component({
   components: {
+    ResultPreview,
     TButton,
     AbsolutePositioningPane,
     Resizer,
@@ -62,12 +60,21 @@ export default class Home extends Vue {
     width: null,
     height: null
   };
+  private recorder: Recorder | null = null;
+  private resultBlob: Blob | null = null;
 
   private get webcamDimensions() {
     if (this.myStream) {
       return streamDimensions(this.myStream);
     }
     return undefined;
+  }
+
+  private get blobDownloadLink() {
+    if (!this.resultBlob) {
+      return null;
+    }
+    return URL.createObjectURL(this.resultBlob);
   }
 
   private get screenshareDimensions() {
@@ -86,6 +93,25 @@ export default class Home extends Vue {
       };
     }
     return undefined;
+  }
+
+  private toggleRecording() {
+    if (!this.screenshare || !this.myStream || !this.webcamDimensions) {
+      return;
+    }
+    if (this.recorder) {
+      this.recorder.stopRecording();
+      this.recorder = null;
+    } else {
+      this.resultBlob = null;
+      this.recorder = new Recorder(
+        { x: 0, y: 0, ...this.webcamDimensions },
+        this.screenshare,
+        this.myStream,
+        blob => (this.resultBlob = blob)
+      );
+      this.recorder.startRecording();
+    }
   }
 
   private async init() {
