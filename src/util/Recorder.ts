@@ -1,5 +1,4 @@
-import { streamDimensions } from "@/util/MediaUtil";
-import { ElementPosition } from "@/store/Types";
+import { ElementPosition, StreamSize } from "@/store/Types";
 import streamSaver from "streamsaver";
 // eslint-disable-next-line
 // @ts-ignore
@@ -13,7 +12,7 @@ export default class Recorder {
 
   private webcamLocation: Location;
   private readonly screenLocation: Location;
-  private readonly screenStream: MediaStream;
+  private readonly screenStream?: MediaStream;
   private readonly webcamStream?: MediaStream;
   private readonly microphoneTrack?: MediaStreamTrack;
   private readonly finishCallback: (blob?: Blob) => void;
@@ -23,7 +22,8 @@ export default class Recorder {
 
   constructor(options: {
     webcamLocation: Location;
-    screenStream: MediaStream;
+    screenSize: StreamSize;
+    screenStream?: MediaStream;
     webcamStream?: MediaStream;
     microphoneTrack?: MediaStreamTrack;
     finishCallback: (blob?: Blob) => void;
@@ -41,7 +41,7 @@ export default class Recorder {
     this.screenLocation = {
       x: 0,
       y: 0,
-      ...streamDimensions(options.screenStream)
+      ...options.screenSize
     };
   }
 
@@ -119,10 +119,13 @@ export default class Recorder {
   }
 
   private drawToCanvas(canvasCtx: CanvasRenderingContext2D) {
-    const screenVideo = document.createElement("video");
-    screenVideo.srcObject = this.screenStream;
-    screenVideo.muted = true;
-    screenVideo.play();
+    let screenVideo: HTMLVideoElement | undefined;
+    if (this.screenStream) {
+      screenVideo = document.createElement("video");
+      screenVideo.srcObject = this.screenStream;
+      screenVideo.muted = true;
+      screenVideo.play();
+    }
 
     let webcamVideo: HTMLVideoElement | undefined;
     if (this.webcamStream) {
@@ -135,13 +138,22 @@ export default class Recorder {
     }
 
     const animationCallback = () => {
-      canvasCtx.drawImage(
-        screenVideo,
-        this.screenLocation.x,
-        this.screenLocation.y,
-        this.screenLocation.width,
-        this.screenLocation.height
-      );
+      if (screenVideo) {
+        canvasCtx.drawImage(
+          screenVideo,
+          this.screenLocation.x,
+          this.screenLocation.y,
+          this.screenLocation.width,
+          this.screenLocation.height
+        );
+      } else {
+        canvasCtx.clearRect(
+          0,
+          0,
+          this.screenLocation.width,
+          this.screenLocation.height
+        );
+      }
 
       if (webcamVideo) {
         canvasCtx.drawImage(
@@ -159,7 +171,9 @@ export default class Recorder {
         if (webcamVideo) {
           webcamVideo.pause();
         }
-        screenVideo.pause();
+        if (screenVideo) {
+          screenVideo.pause();
+        }
       }
     };
 

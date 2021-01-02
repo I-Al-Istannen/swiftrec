@@ -8,7 +8,7 @@
         </div>
       </t-col>
     </t-row>
-    <t-row v-if="screenshare">
+    <t-row v-if="ready">
       <t-col cols="12">
         <recording-pane
           @restart="deinit"
@@ -21,34 +21,47 @@
     </t-row>
     <t-row v-else>
       <t-row no-gutters>
-        <t-col>
-          <t-row align-left>
-            <t-col>
-              <t-checkbox v-model="streamToFile">
-                Stream to file
-              </t-checkbox>
-            </t-col>
-          </t-row>
-          <t-row align-left>
-            <t-col>
-              <t-checkbox v-model="useMicrophone">
-                Use Microphone
-              </t-checkbox>
-            </t-col>
-          </t-row>
-          <t-row align-left>
-            <t-col>
-              <t-checkbox v-model="useWebcam">
-                Use Webcam
-              </t-checkbox>
-            </t-col>
-          </t-row>
-        </t-col>
-      </t-row>
-      <t-row no-gutters>
-        <t-col>
-          <t-button @click="init">[Continue]</t-button>
-        </t-col>
+        <t-form v-model="formValid">
+          <t-col>
+            <t-container wrap no-gutter style="flex-direction: column">
+              <t-row align-left wrap>
+                <t-col cols="12">
+                  <t-checkbox v-model="streamToFile">
+                    Stream video to file
+                  </t-checkbox>
+                </t-col>
+              </t-row>
+              <t-row align-left wrap>
+                <t-col cols="12">
+                  <t-checkbox v-model="useMicrophone">
+                    Record your Microphone
+                  </t-checkbox>
+                </t-col>
+              </t-row>
+              <t-row align-left wrap>
+                <t-col cols="12">
+                  <t-checkbox v-model="useWebcam" :rules="[sourceSelected]">
+                    Record your Webcam
+                  </t-checkbox>
+                </t-col>
+              </t-row>
+              <t-row align-left wrap>
+                <t-col cols="12">
+                  <t-checkbox v-model="useScreen" :rules="[sourceSelected]">
+                    Share your screen
+                  </t-checkbox>
+                </t-col>
+              </t-row>
+              <t-row no-gutters>
+                <t-col>
+                  <t-button class="mt-2" :disabled="!formValid" @click="init">
+                    [Continue]
+                  </t-button>
+                </t-col>
+              </t-row>
+            </t-container>
+          </t-col>
+        </t-form>
       </t-row>
     </t-row>
   </t-container>
@@ -65,9 +78,9 @@ import { getMicrophone, getScreen, getWebcam } from "@/util/MediaUtil";
 import Resizer from "@/components/Resizer.vue";
 import AbsolutePositioningPane from "@/components/AbsolutePositioningPane.vue";
 import TButton from "@/components/TButton.vue";
-import ResultPreview from "@/components/ResultPreview.vue";
 import RecordingPane from "@/components/RecordingPane.vue";
 import TCheckbox from "@/components/TCheckbox.vue";
+import TForm from "@/components/TForm.vue";
 
 type Error = {
   component: string;
@@ -76,9 +89,9 @@ type Error = {
 
 @Component({
   components: {
+    TForm,
     TCheckbox,
     RecordingPane,
-    ResultPreview,
     TButton,
     AbsolutePositioningPane,
     Resizer,
@@ -95,7 +108,20 @@ export default class Home extends Vue {
   private streamToFile = true;
   private useMicrophone = true;
   private useWebcam = true;
+  private useScreen = true;
   private errors: Error[] = [];
+  private formValid = true;
+  private ready = false;
+
+  private sourceSelected(input: boolean) {
+    if (this.useWebcam || this.useScreen) {
+      return null;
+    }
+    if (input) {
+      return null;
+    }
+    return "Webcam/Screenshare needed";
+  }
 
   private deinit() {
     if (this.webcamStream) {
@@ -114,6 +140,7 @@ export default class Home extends Vue {
     this.microphoneTrack = null;
 
     this.errors = [];
+    this.ready = false;
   }
 
   private async init() {
@@ -132,9 +159,13 @@ export default class Home extends Vue {
         })
       );
     }
-    await this.doWithError("Screenshare", () =>
-      getScreen().then(it => (this.screenshare = it))
-    );
+    if (this.useScreen) {
+      await this.doWithError("Screenshare", () =>
+        getScreen().then(it => (this.screenshare = it))
+      );
+    }
+
+    this.ready = true;
   }
 
   private async doWithError(component: string, func: () => Promise<unknown>) {

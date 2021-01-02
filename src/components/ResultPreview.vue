@@ -16,7 +16,10 @@
     >
       <media-stream-display :stream="webcamStream"></media-stream-display>
     </resizer>
-    <media-stream-display :stream="screenshareStream"></media-stream-display>
+    <media-stream-display
+      v-if="screenshareStream"
+      :stream="screenshareStream"
+    ></media-stream-display>
   </absolute-positioning-pane>
 </template>
 
@@ -36,8 +39,12 @@ import { streamDimensions } from "@/util/MediaUtil";
 export default class ResultPreview extends Vue {
   @Prop()
   private readonly screenshareSize!: StreamSize;
+
   @Prop()
-  private readonly screenshareStream!: MediaStream;
+  private readonly canvasSize!: StreamSize;
+
+  @Prop()
+  private readonly screenshareStream!: MediaStream | null;
 
   @Model("webcam-position")
   private readonly webcamPosition!: ElementPosition | null;
@@ -107,16 +114,10 @@ export default class ResultPreview extends Vue {
   }
 
   private get previewWidthRatio() {
-    return (
-      streamDimensions(this.screenshareStream).width /
-      this.screenshareSize.width
-    );
+    return this.canvasSize.width / this.screenshareSize.width;
   }
   private get previewHeightRatio() {
-    return (
-      streamDimensions(this.screenshareStream).height /
-      this.screenshareSize.height
-    );
+    return this.canvasSize.height / this.screenshareSize.height;
   }
   // <!--</editor-fold>-->
 }

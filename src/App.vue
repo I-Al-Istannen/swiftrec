@@ -98,11 +98,18 @@ a.router-link-exact-active.concealed-router-link {
   font-weight: bold;
 }
 
+.d-inline-block {
+  display: inline-block;
+}
+
 .mr-2 {
   margin-right: 8px;
 }
 .ml-2 {
   margin-left: 8px;
+}
+.mt-2 {
+  margin-top: 8px;
 }
 .mr-6 {
   margin-right: 24px;

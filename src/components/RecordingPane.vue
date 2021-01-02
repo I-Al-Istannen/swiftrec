@@ -1,6 +1,6 @@
 <template>
   <t-container fluid ref="root" no-gutter>
-    <t-row v-if="screenshare" no-gutters>
+    <t-row v-if="screenshare || webcamStream" no-gutters>
       <t-col>
         <t-button @click="toggleRecording">
           {{ recorder ? "[Stop Recording]" : "[Start Recording]" }}
@@ -24,7 +24,8 @@
     <t-row no-gutters>
       <t-col>
         <result-preview
-          v-if="screenshare && containerWidth"
+          v-if="containerWidth"
+          :canvas-size="canvasSize"
           :screenshare-size="screenshareDimensions"
           :screenshare-stream="screenshare"
           :webcam-stream="webcamStream"
@@ -62,7 +63,7 @@ export default class RecordingPane extends Vue {
   @Prop()
   private readonly microphoneTrack!: MediaStreamTrack | null;
   @Prop()
-  private readonly screenshare!: MediaStream;
+  private readonly screenshare!: MediaStream | null;
   @Prop()
   private readonly streamToFile!: boolean;
 
@@ -78,7 +79,19 @@ export default class RecordingPane extends Vue {
       throw Error(":(");
     }
 
-    const { width, height } = streamDimensions(this.screenshare);
+    let width: number;
+    let height: number;
+
+    if (this.screenshare) {
+      width = streamDimensions(this.screenshare).width;
+      height = streamDimensions(this.screenshare).height;
+    } else if (this.webcamStream) {
+      width = streamDimensions(this.webcamStream).width;
+      height = streamDimensions(this.webcamStream).height;
+    } else {
+      throw Error(":(");
+    }
+
     const newWidth = this.containerWidth;
     const originalRatio = height / width;
     return {
@@ -107,7 +120,8 @@ export default class RecordingPane extends Vue {
           width: 0,
           height: 0
         },
-        screenStream: this.screenshare,
+        screenSize: this.canvasSize,
+        screenStream: this.screenshare || undefined,
         webcamStream: this.webcamStream || undefined,
         finishCallback: blob => (this.resultBlob = blob || null),
         streamToFile: this.streamToFile,
@@ -117,8 +131,17 @@ export default class RecordingPane extends Vue {
     }
   }
 
+  private get canvasSize() {
+    if (this.screenshare) {
+      return streamDimensions(this.screenshare);
+    } else if (this.webcamStream) {
+      return streamDimensions(this.webcamStream);
+    }
+    throw Error(":(");
+  }
+
   private updateContainerSize() {
-    const { width } = streamDimensions(this.screenshare);
+    const { width } = this.canvasSize;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const root = (this.$refs["root"] as any).$el as HTMLElement;
     this.containerWidth = Math.min(
