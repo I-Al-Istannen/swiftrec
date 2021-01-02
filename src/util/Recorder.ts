@@ -50,13 +50,10 @@ export default class Recorder {
     targetCanvas.width = this.screenLocation.width;
     targetCanvas.height = this.screenLocation.height;
 
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const canvasCtx = targetCanvas.getContext("2d", {
       alpha: false
-    });
-
-    if (!canvasCtx) {
-      throw Error("Sad");
-    }
+    })!;
 
     const audioTrack = this.microphoneTrack;
 
@@ -174,9 +171,6 @@ export default class Recorder {
   }
 
   public stopRecording() {
-    if (!this.isRecording) {
-      throw Error("Not recording :(");
-    }
     this.recorder.stop();
   }
 }
