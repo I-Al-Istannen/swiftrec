@@ -72,7 +72,7 @@ export default class Resizer extends Vue {
     return undefined;
   }
 
-  private containerMouseDown(e: MouseEvent) {
+  private containerMouseDown(e: MouseEvent | TouchEvent) {
     this.setDraggingInfo(e);
 
     if (!this.draggingInfo) {
@@ -80,9 +80,12 @@ export default class Resizer extends Vue {
     }
 
     e.stopPropagation();
+    e.preventDefault();
 
     document.documentElement.addEventListener("mouseup", this.mouseUp);
+    document.documentElement.addEventListener("touchend", this.mouseUp);
     document.documentElement.addEventListener("mousemove", this.mouseMove);
+    document.documentElement.addEventListener("touchmove", this.mouseMove);
   }
 
   private mouseUp() {
@@ -94,15 +97,19 @@ export default class Resizer extends Vue {
       this.draggingInfo = null;
     }
     document.documentElement.removeEventListener("mouseup", this.mouseUp);
+    document.documentElement.removeEventListener("touchend", this.mouseUp);
     document.documentElement.removeEventListener("mousemove", this.mouseMove);
+    document.documentElement.removeEventListener("touchmove", this.mouseMove);
 
     this.$emit("resize", { width: newWidth, height: newHeight });
   }
 
-  private mouseMove(e: MouseEvent) {
+  private mouseMove(e: MouseEvent | TouchEvent) {
     if (!this.draggingInfo) {
       return;
     }
+    e.preventDefault();
+
     const clamp = (x: number, max: number | null) => {
       if (max === null) {
         max = Number.POSITIVE_INFINITY;
@@ -110,8 +117,10 @@ export default class Resizer extends Vue {
       return Math.max(0, Math.min(x, max));
     };
 
-    const deltaX = e.offsetX - this.draggingInfo.startX;
-    const deltaY = e.offsetY - this.draggingInfo.startY;
+    const { offsetX, offsetY } = this.offsetFromEvent(e, true);
+
+    const deltaX = offsetX - this.draggingInfo.startX;
+    const deltaY = offsetY - this.draggingInfo.startY;
     this.overlayWidth = clamp(
       this.draggingInfo.initialWidth + deltaX,
       this.maxWidth
@@ -122,27 +131,56 @@ export default class Resizer extends Vue {
     );
   }
 
-  private setDraggingInfo(e: MouseEvent) {
+  private offsetFromEvent(e: MouseEvent | TouchEvent, absolute: boolean) {
+    let offsetX: number;
+    let offsetY: number;
+
+    if (e instanceof MouseEvent) {
+      offsetX = e.offsetX;
+      offsetY = e.offsetY;
+    } else {
+      let rect: DOMRect;
+      if (absolute) {
+        const container = this.$refs["container"] as HTMLElement;
+        rect = container.getBoundingClientRect();
+      } else {
+        const elem: HTMLElement = e.target as HTMLElement;
+        rect = elem.getBoundingClientRect();
+      }
+      offsetX = e.targetTouches[0].pageX - Math.floor(rect.left);
+      offsetY = e.targetTouches[0].pageY - Math.floor(rect.top);
+    }
+    return { offsetX: offsetX, offsetY: offsetY };
+  }
+
+  private setDraggingInfo(e: MouseEvent | TouchEvent) {
     const container = this.$refs["container"] as HTMLElement;
     const width = container.offsetWidth;
     const height = container.offsetHeight;
     const diff = (a: number, b: number) => Math.abs(a - b);
 
+    const { offsetX, offsetY } = this.offsetFromEvent(e, false);
+
     // Not in a corner
     if (
-      diff(e.offsetY, height) > this.cornerThreshold ||
-      diff(e.offsetX, width) > this.cornerThreshold
+      diff(offsetY, height) > this.cornerThreshold ||
+      diff(offsetX, width) > this.cornerThreshold
     ) {
       this.draggingInfo = null;
       return;
     }
 
     this.draggingInfo = {
-      startX: e.offsetX,
-      startY: e.offsetY,
+      startX: offsetX,
+      startY: offsetY,
       initialHeight: height,
       initialWidth: width
     };
+  }
+
+  private mounted() {
+    const container = this.$refs["container"] as HTMLElement;
+    container.addEventListener("touchstart", this.containerMouseDown);
   }
 }
 </script>
