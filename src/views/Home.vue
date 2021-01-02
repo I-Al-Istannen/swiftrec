@@ -48,7 +48,11 @@ export default class Home extends Vue {
   private screenshare: MediaStream | null = null;
 
   private async init() {
-    this.webcamStream = await getWebcam();
+    try {
+      this.webcamStream = await getWebcam();
+    } catch (e) {
+      console.log(e);
+    }
     this.screenshare = await getScreen();
   }
 }

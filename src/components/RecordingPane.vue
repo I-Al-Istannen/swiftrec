@@ -1,6 +1,6 @@
 <template>
   <t-container fluid ref="root" no-gutter>
-    <t-row v-if="screenshare && webcamStream" no-gutters>
+    <t-row v-if="screenshare" no-gutters>
       <t-col>
         <t-button @click="toggleRecording">
           {{ recorder ? "[Stop Recording]" : "[Start Recording]" }}
