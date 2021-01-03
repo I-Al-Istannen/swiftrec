@@ -66,8 +66,8 @@ export default class AbsolutePositioningPane extends Vue {
       offsetY = e.offsetY;
     } else {
       const rect = target.getBoundingClientRect();
-      offsetX = e.targetTouches[0].pageX - Math.floor(rect.left);
-      offsetY = e.targetTouches[0].pageY - Math.floor(rect.top);
+      offsetX = e.targetTouches[0].clientX - Math.floor(rect.left);
+      offsetY = e.targetTouches[0].clientY - Math.floor(rect.top);
     }
 
     this.dragInformation = {
@@ -105,19 +105,11 @@ export default class AbsolutePositioningPane extends Vue {
     let offsetY: number;
 
     if (e instanceof MouseEvent) {
-      offsetX = e.offsetX;
-      offsetY = e.offsetY;
-
-      let current = e.target as HTMLElement;
-      while (current !== root) {
-        offsetX += current.offsetLeft;
-        offsetY += current.offsetTop;
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        current = current.parentElement!;
-      }
+      offsetX = e.clientX - rootRect.left;
+      offsetY = e.clientY - rootRect.top;
     } else {
-      offsetX = e.targetTouches[0].pageX - rootRect.left;
-      offsetY = e.targetTouches[0].pageY - rootRect.top;
+      offsetX = e.targetTouches[0].clientX - rootRect.left;
+      offsetY = e.targetTouches[0].clientY - rootRect.top;
     }
 
     const deltaX = offsetX - this.dragInformation.startX;
