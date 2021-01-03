@@ -47,7 +47,15 @@
               </t-row>
               <t-row align-left wrap>
                 <t-col cols="12">
-                  <t-checkbox v-model="useScreen" :rules="[sourceSelected]">
+                  <t-checkbox
+                    :disabled="!canShareScreen"
+                    :checked="useScreen"
+                    @checked="useScreenPref = $event"
+                    :error-message="
+                      canShareScreen ? null : 'Not available on your client'
+                    "
+                    :rules="[sourceSelected]"
+                  >
                     Share your screen
                   </t-checkbox>
                 </t-col>
@@ -108,10 +116,19 @@ export default class Home extends Vue {
   private streamToFile = true;
   private useMicrophone = true;
   private useWebcam = true;
-  private useScreen = true;
+  private useScreenPref = true;
   private errors: Error[] = [];
   private formValid = true;
   private ready = false;
+
+  private get canShareScreen() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return !!(navigator.mediaDevices as any).getDisplayMedia;
+  }
+
+  private get useScreen() {
+    return this.useScreenPref && this.canShareScreen;
+  }
 
   private sourceSelected(input: boolean) {
     if (this.useWebcam || this.useScreen) {

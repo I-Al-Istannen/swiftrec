@@ -1,14 +1,19 @@
 <template>
-  <div class="d-inline-block" style="flex-direction: column">
-    <label>
-      <input type="checkbox" :checked="checked" @click="onClick" />
+  <div class="d-inline-block" style="flex-direction: column;">
+    <label :class="{ disabled: disabled }">
+      <input
+        :disabled="disabled"
+        type="checkbox"
+        :checked="checked"
+        @click="onClick"
+      />
       <span class="fake-box">
         <span></span>
       </span>
       <slot></slot>
     </label>
-    <span class="text-error">
-      {{ validationResult }}
+    <span class="text-error" v-if="errorMessage || validationResult">
+      {{ errorMessage ? errorMessage : validationResult }}
     </span>
   </div>
 </template>
@@ -25,6 +30,12 @@ export default class TCheckbox extends mixins(ValidatableMixin) {
 
   @Prop({ default: () => [] })
   private readonly rules!: ((input: boolean) => string | null)[];
+
+  @Prop({ default: false, type: Boolean })
+  private readonly disabled!: boolean;
+
+  @Prop({ default: null })
+  private readonly errorMessage!: string | null;
 
   @Watch("checked")
   private updateValidator() {
@@ -59,7 +70,7 @@ label {
   user-select: none;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
 }
 input[type="checkbox"] {
   display: none;
@@ -81,6 +92,16 @@ input[type="checkbox"] {
 }
 input[type="checkbox"]:checked + .fake-box > span {
   background-color: var(--color-accent);
+}
+
+label.disabled {
+  color: var(--color-text-dimmed);
+}
+input[type="checkbox"]:disabled + .fake-box {
+  border: 2px solid var(--color-text-dimmed);
+}
+input[type="checkbox"]:checked:disabled + .fake-box > span {
+  background-color: var(--color-text-dimmed);
 }
 
 .text-error {

@@ -45,8 +45,8 @@ export default class TRow extends Vue {
   max-width: max-content;
 }
 .t-row.align-left {
-  justify-content: start;
-  align-items: start;
+  justify-content: flex-start;
+  align-items: flex-start;
 }
 .t-row.no-gutters {
   margin: 0;
