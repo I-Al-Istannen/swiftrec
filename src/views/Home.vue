@@ -140,6 +140,17 @@ export default class Home extends Vue {
     return "Webcam/Screenshare needed";
   }
 
+  private lostTrackAccess() {
+    this.errors = [
+      {
+        component: "Lost Access",
+        message:
+          "I lost access to your devices, did you revoke it? Operation can not" +
+          " continue, please click 'Change Settings' when you are ready."
+      }
+    ];
+  }
+
   private deinit() {
     if (this.webcamStream) {
       this.webcamStream.getTracks().forEach(it => it.stop());
@@ -183,6 +194,20 @@ export default class Home extends Vue {
     }
 
     this.ready = true;
+
+    if (this.microphoneTrack) {
+      this.microphoneTrack.onended = this.lostTrackAccess;
+    }
+    if (this.webcamStream) {
+      this.webcamStream
+        .getTracks()
+        .forEach(track => (track.onended = this.lostTrackAccess));
+    }
+    if (this.screenshare) {
+      this.screenshare
+        .getTracks()
+        .forEach(track => (track.onended = this.lostTrackAccess));
+    }
   }
 
   private async doWithError(component: string, func: () => Promise<unknown>) {

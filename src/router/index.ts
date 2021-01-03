@@ -20,8 +20,8 @@ export const routes: RouteConfigEx[] = [
     name: "home",
     component: Home,
     meta: {
-      title: "Heimat",
-      navigable: true
+      title: "Home",
+      navigable: false
     }
   }
 ];
