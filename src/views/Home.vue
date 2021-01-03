@@ -62,7 +62,11 @@
               </t-row>
               <t-row no-gutters>
                 <t-col>
-                  <t-button class="mt-2" :disabled="!formValid" @click="init">
+                  <t-button
+                    class="mt-2"
+                    :disabled="!formValid || waitingForPermissions"
+                    @click="init"
+                  >
                     [Continue]
                   </t-button>
                 </t-col>
@@ -120,6 +124,7 @@ export default class Home extends Vue {
   private errors: Error[] = [];
   private formValid = true;
   private ready = false;
+  private waitingForPermissions = false;
 
   private get canShareScreen() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -169,9 +174,11 @@ export default class Home extends Vue {
 
     this.errors = [];
     this.ready = false;
+    this.waitingForPermissions = false;
   }
 
   private async init() {
+    this.waitingForPermissions = true;
     this.errors = [];
     if (this.useWebcam) {
       await this.doWithError("Webcam", () =>
@@ -194,6 +201,7 @@ export default class Home extends Vue {
     }
 
     this.ready = true;
+    this.waitingForPermissions = false;
 
     if (this.microphoneTrack) {
       this.microphoneTrack.onended = this.lostTrackAccess;
