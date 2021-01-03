@@ -1,6 +1,6 @@
 <template>
   <absolute-positioning-pane
-    style="border: 2px solid var(--color-warning)"
+    class="root-pane"
     :width="screenshareSize.width"
     :height="screenshareSize.height"
     @element-moved="elementMoved"
@@ -10,8 +10,8 @@
       style="z-index: 10"
       :width="effectiveWebcamPosition.width"
       :height="effectiveWebcamPosition.height"
-      :max-height="webcamStreamSize.height"
-      :max-width="webcamStreamSize.width"
+      :max-height="transformedMaxWebcamSize.height"
+      :max-width="transformedMaxWebcamSize.width"
       @resize="webcamResized"
     >
       <media-stream-display :stream="webcamStream"></media-stream-display>
@@ -63,6 +63,14 @@ export default class ResultPreview extends Vue {
     if (this.webcamPosition) {
       return this.transformToLocal(this.webcamPosition);
     }
+    return this.transformToLocal({
+      x: 0,
+      y: 0,
+      ...this.webcamStreamSize
+    });
+  }
+
+  private get transformedMaxWebcamSize() {
     return this.transformToLocal({
       x: 0,
       y: 0,
@@ -122,3 +130,10 @@ export default class ResultPreview extends Vue {
   // <!--</editor-fold>-->
 }
 </script>
+
+<style scoped>
+.root-pane {
+  box-sizing: content-box;
+  border: 2px solid var(--color-warning);
+}
+</style>

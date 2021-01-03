@@ -21,6 +21,7 @@ import Vue from "vue";
 import Component from "vue-class-component";
 import TContainer from "./TContainer.vue";
 import { Prop } from "vue-property-decorator";
+import { getSizeWithoutBorder } from "@/util/MeasurementUtils";
 
 type DraggingInfo = {
   initialWidth: number;
@@ -145,19 +146,18 @@ export default class Resizer extends Vue {
     }
 
     if (e instanceof MouseEvent) {
-      offsetX = e.clientX - Math.floor(rect.left);
-      offsetY = e.clientY - Math.floor(rect.top);
+      offsetX = e.clientX - rect.left;
+      offsetY = e.clientY - rect.top;
     } else {
-      offsetX = e.targetTouches[0].clientX - Math.floor(rect.left);
-      offsetY = e.targetTouches[0].clientY - Math.floor(rect.top);
+      offsetX = e.targetTouches[0].clientX - rect.left;
+      offsetY = e.targetTouches[0].clientY - rect.top;
     }
     return { offsetX: offsetX, offsetY: offsetY };
   }
 
   private setDraggingInfo(e: MouseEvent | TouchEvent) {
     const container = this.$refs["container"] as HTMLElement;
-    const width = container.offsetWidth;
-    const height = container.offsetHeight;
+    const { width, height } = getSizeWithoutBorder(container);
     const diff = (a: number, b: number) => Math.abs(a - b);
 
     const { offsetX, offsetY } = this.offsetFromEvent(e, false);

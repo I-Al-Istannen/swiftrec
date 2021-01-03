@@ -15,6 +15,7 @@ import Vue from "vue";
 import Component from "vue-class-component";
 import TContainer from "./TContainer.vue";
 import { Prop } from "vue-property-decorator";
+import { getSizeFull } from "@/util/MeasurementUtils";
 
 type DragInformation = {
   target: HTMLElement;
@@ -66,8 +67,8 @@ export default class AbsolutePositioningPane extends Vue {
       offsetY = e.offsetY;
     } else {
       const rect = target.getBoundingClientRect();
-      offsetX = e.targetTouches[0].clientX - Math.floor(rect.left);
-      offsetY = e.targetTouches[0].clientY - Math.floor(rect.top);
+      offsetX = e.targetTouches[0].clientX - rect.left;
+      offsetY = e.targetTouches[0].clientY - rect.top;
     }
 
     this.dragInformation = {
@@ -119,14 +120,14 @@ export default class AbsolutePositioningPane extends Vue {
       return Math.max(0, Math.min(x, max));
     };
 
-    const targetRext = this.dragInformation.target.getBoundingClientRect();
+    const targetSize = getSizeFull(this.dragInformation.target);
     const newX = clamp(
       this.dragInformation.startX + deltaX - this.dragInformation.offsetX,
-      rootRect.width - targetRext.width
+      rootRect.width - targetSize.width
     );
     const newY = clamp(
       this.dragInformation.startY + deltaY - this.dragInformation.offsetY,
-      rootRect.height - targetRext.height
+      rootRect.height - targetSize.height
     );
 
     this.dragInformation.target.style.left = newX + "px";

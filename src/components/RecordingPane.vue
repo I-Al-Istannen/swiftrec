@@ -48,6 +48,7 @@ import { ElementPosition } from "@/store/Types";
 import Recorder from "@/util/Recorder";
 import { streamDimensions } from "@/util/MediaUtil";
 import { Prop, Watch } from "vue-property-decorator";
+import { getSizeFull } from "@/util/MeasurementUtils";
 
 @Component({
   components: { ResultPreview, TButton, TCol, TRow, TContainer }
@@ -144,10 +145,7 @@ export default class RecordingPane extends Vue {
     const { width } = this.canvasSize;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const root = (this.$refs["root"] as any).$el as HTMLElement;
-    this.containerWidth = Math.min(
-      root.getBoundingClientRect().width * 0.8,
-      width
-    );
+    this.containerWidth = Math.min(getSizeFull(root).width * 0.8, width);
   }
 
   private restart() {
