@@ -135,20 +135,21 @@ export default class Resizer extends Vue {
     let offsetX: number;
     let offsetY: number;
 
-    if (e instanceof MouseEvent) {
-      offsetX = e.offsetX;
-      offsetY = e.offsetY;
+    let rect: DOMRect;
+    if (absolute) {
+      const container = this.$refs["container"] as HTMLElement;
+      rect = container.getBoundingClientRect();
     } else {
-      let rect: DOMRect;
-      if (absolute) {
-        const container = this.$refs["container"] as HTMLElement;
-        rect = container.getBoundingClientRect();
-      } else {
-        const elem: HTMLElement = e.target as HTMLElement;
-        rect = elem.getBoundingClientRect();
-      }
-      offsetX = e.targetTouches[0].pageX - Math.floor(rect.left);
-      offsetY = e.targetTouches[0].pageY - Math.floor(rect.top);
+      const elem: HTMLElement = e.target as HTMLElement;
+      rect = elem.getBoundingClientRect();
+    }
+
+    if (e instanceof MouseEvent) {
+      offsetX = e.clientX - Math.floor(rect.left);
+      offsetY = e.clientY - Math.floor(rect.top);
+    } else {
+      offsetX = e.targetTouches[0].clientX - Math.floor(rect.left);
+      offsetY = e.targetTouches[0].clientY - Math.floor(rect.top);
     }
     return { offsetX: offsetX, offsetY: offsetY };
   }
