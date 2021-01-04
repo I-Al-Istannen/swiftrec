@@ -62,7 +62,7 @@ export default class RecordingPane extends Vue {
   @Prop()
   private readonly webcamStream!: MediaStream | null;
   @Prop()
-  private readonly microphoneTrack!: MediaStreamTrack | null;
+  private readonly audioTracks!: MediaStreamTrack[];
   @Prop()
   private readonly screenshare!: MediaStream | null;
   @Prop()
@@ -126,7 +126,7 @@ export default class RecordingPane extends Vue {
         webcamStream: this.webcamStream || undefined,
         finishCallback: blob => (this.resultBlob = blob || null),
         streamToFile: this.streamToFile,
-        microphoneTrack: this.microphoneTrack || undefined
+        audioTracks: this.audioTracks
       });
       this.recorder.startRecording();
     }

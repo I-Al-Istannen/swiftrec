@@ -14,7 +14,7 @@ export default class Recorder {
   private readonly screenLocation: Location;
   private readonly screenStream?: MediaStream;
   private readonly webcamStream?: MediaStream;
-  private readonly microphoneTrack?: MediaStreamTrack;
+  private readonly audioTracks: MediaStreamTrack[];
   private readonly finishCallback: (blob?: Blob) => void;
   private readonly chunks: Blob[];
   private readonly streamToFile: boolean;
@@ -25,7 +25,7 @@ export default class Recorder {
     screenSize: StreamSize;
     screenStream?: MediaStream;
     webcamStream?: MediaStream;
-    microphoneTrack?: MediaStreamTrack;
+    audioTracks: MediaStreamTrack[];
     finishCallback: (blob?: Blob) => void;
     streamToFile: boolean;
   }) {
@@ -36,7 +36,7 @@ export default class Recorder {
     this.chunks = [];
     this.isRecording = false;
     this.streamToFile = options.streamToFile;
-    this.microphoneTrack = options.microphoneTrack;
+    this.audioTracks = options.audioTracks;
 
     this.screenLocation = {
       x: 0,
@@ -55,13 +55,9 @@ export default class Recorder {
       alpha: false
     })!;
 
-    const audioTrack = this.microphoneTrack;
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const canvasStream: MediaStream = (targetCanvas as any).captureStream();
-    if (audioTrack) {
-      canvasStream.addTrack(audioTrack);
-    }
+    this.audioTracks.forEach(track => canvasStream.addTrack(track));
 
     this.drawToCanvas(canvasCtx);
 

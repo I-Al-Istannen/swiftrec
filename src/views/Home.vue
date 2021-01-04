@@ -15,7 +15,7 @@
           :webcam-stream="webcamStream"
           :screenshare="screenshare"
           :stream-to-file="streamToFile"
-          :microphone-track="microphoneTrack"
+          :audio-tracks="audioTracks"
         ></recording-pane>
       </t-col>
     </t-row>
@@ -116,7 +116,7 @@ type Error = {
 export default class Home extends Vue {
   private webcamStream: MediaStream | null = null;
   private screenshare: MediaStream | null = null;
-  private microphoneTrack: MediaStreamTrack | null = null;
+  private audioTracks: MediaStreamTrack[] = [];
   private streamToFile = true;
   private useMicrophone = true;
   private useWebcam = true;
@@ -167,10 +167,10 @@ export default class Home extends Vue {
     }
     this.screenshare = null;
 
-    if (this.microphoneTrack) {
-      this.microphoneTrack.stop();
+    if (this.audioTracks.length !== 0) {
+      this.audioTracks.forEach(it => it.stop());
     }
-    this.microphoneTrack = null;
+    this.audioTracks = [];
 
     this.errors = [];
     this.ready = false;
@@ -189,7 +189,7 @@ export default class Home extends Vue {
       await this.doWithError("Microphone", () =>
         getMicrophone().then(micStream => {
           if (micStream) {
-            this.microphoneTrack = micStream.getAudioTracks()[0];
+            this.audioTracks.push(micStream.getAudioTracks()[0]);
           }
         })
       );
@@ -203,8 +203,8 @@ export default class Home extends Vue {
     this.ready = true;
     this.waitingForPermissions = false;
 
-    if (this.microphoneTrack) {
-      this.microphoneTrack.onended = this.lostTrackAccess;
+    if (this.audioTracks) {
+      this.audioTracks.forEach(track => (track.onended = this.lostTrackAccess));
     }
     if (this.webcamStream) {
       this.webcamStream
