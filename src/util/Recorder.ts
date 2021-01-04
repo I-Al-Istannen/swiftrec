@@ -57,7 +57,22 @@ export default class Recorder {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const canvasStream: MediaStream = (targetCanvas as any).captureStream();
-    this.audioTracks.forEach(track => canvasStream.addTrack(track));
+
+    if (this.audioTracks.length <= 1) {
+      this.audioTracks.forEach(track => {
+        canvasStream.addTrack(track);
+      });
+    } else {
+      // Mux them together
+      const audioContext = new AudioContext();
+      const audioStream = audioContext.createMediaStreamDestination();
+      this.audioTracks.forEach(track => {
+        audioContext
+          .createMediaStreamSource(new MediaStream([track]))
+          .connect(audioStream);
+      });
+      canvasStream.addTrack(audioStream.stream.getAudioTracks()[0]);
+    }
 
     this.drawToCanvas(canvasCtx);
 

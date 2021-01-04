@@ -14,7 +14,7 @@ export async function getScreen(): Promise<MediaStream> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return await (navigator.mediaDevices as any).getDisplayMedia({
     video: true,
-    audio: false
+    audio: true
   });
 }
 

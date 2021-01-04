@@ -60,6 +60,13 @@
                   </t-checkbox>
                 </t-col>
               </t-row>
+              <t-row align-left wrap>
+                <t-col cols="12">
+                  <t-checkbox v-model="useComputerAudio">
+                    Record computer audio
+                  </t-checkbox>
+                </t-col>
+              </t-row>
               <t-row no-gutters>
                 <t-col>
                   <t-button
@@ -121,6 +128,7 @@ export default class Home extends Vue {
   private useMicrophone = true;
   private useWebcam = true;
   private useScreenPref = true;
+  private useComputerAudio = false;
   private errors: Error[] = [];
   private formValid = true;
   private ready = false;
@@ -198,6 +206,17 @@ export default class Home extends Vue {
       await this.doWithError("Screenshare", () =>
         getScreen().then(it => (this.screenshare = it))
       );
+      if (this.screenshare && this.useComputerAudio) {
+        if (this.screenshare.getAudioTracks().length === 0) {
+          this.errors.push({
+            component: "Computer audio",
+            message: "Sorry, not supported on your system (or you denied it)"
+          });
+        }
+        this.audioTracks = this.audioTracks.concat(
+          this.screenshare.getAudioTracks()
+        );
+      }
     }
 
     this.ready = true;
