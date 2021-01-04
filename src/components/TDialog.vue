@@ -66,6 +66,8 @@ export default class TDialog extends Vue {
   top: 0;
   bottom: 0;
 
+  z-index: 20;
+
   overflow: auto;
 
   background-color: rgba(0, 0, 0, 0.75);

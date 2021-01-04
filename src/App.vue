@@ -111,6 +111,9 @@ a.router-link-exact-active.concealed-router-link {
 .mt-2 {
   margin-top: 8px;
 }
+.mt-6 {
+  margin-top: 24px;
+}
 .mr-6 {
   margin-right: 24px;
 }

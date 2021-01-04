@@ -1,13 +1,69 @@
 <template>
   <t-container fluid ref="root" no-gutter>
     <t-row v-if="screenshare || webcamStream" no-gutters>
+      <t-col v-if="!recorder">
+        <t-dialog v-model="countdownDialogOpen" width="500">
+          <template #activator="{ on }">
+            <t-button :disabled="currentCountdown !== null" v-on="on">
+              [Set countdown]
+            </t-button>
+          </template>
+
+          <t-card>
+            <template #title>
+              <t-col>
+                <h3>Set the recording countdown</h3>
+              </t-col>
+            </template>
+            <template #text>
+              <t-col>
+                <t-form v-model="countdownValid">
+                  <t-text-field
+                    v-model="countdownSecondsStr"
+                    :rules="[ruleIsNumber]"
+                    placeholder="Countdown in seconds"
+                  ></t-text-field>
+                </t-form>
+              </t-col>
+            </template>
+            <template #actions>
+              <t-spacer></t-spacer>
+              <t-button
+                :disabled="!countdownValid"
+                @click="countdownDialogOpen = false"
+                class="mt-6"
+              >
+                <span v-if="!countdownSecondsStr">Do not use a countdown</span>
+                <span v-else>Confirm countdown</span>
+              </t-button>
+            </template>
+          </t-card>
+        </t-dialog>
+      </t-col>
       <t-col>
-        <t-button @click="toggleRecording">
-          {{ recorder ? "[Stop Recording]" : "[Start Recording]" }}
+        <t-button
+          class="ml-2"
+          :disabled="currentCountdown !== null"
+          @click="toggleRecording"
+        >
+          <span v-if="recorder">[Stop Recording]</span>
+          <span v-if="!recorder && !currentCountdown && countdownSeconds === 0">
+            [Start Recording]
+          </span>
+          <span v-if="!recorder && !currentCountdown && countdownSeconds !== 0">
+            [Start Recording in {{ countdownSeconds }}s]
+          </span>
+          <span v-if="!recorder && currentCountdown">
+            [Starting in {{ currentCountdown }}s]
+          </span>
         </t-button>
       </t-col>
       <t-col v-if="blobDownloadLink" class="ml-2">
-        <a :href="blobDownloadLink" download="Recording.webm">
+        <a
+          :href="blobDownloadLink"
+          download="Recording.webm"
+          class="highlighted-link"
+        >
           [Save Recording]
         </a>
       </t-col>
@@ -49,15 +105,35 @@ import Recorder from "@/util/Recorder";
 import { streamDimensions } from "@/util/MediaUtil";
 import { Prop, Watch } from "vue-property-decorator";
 import { getSizeFull } from "@/util/MeasurementUtils";
+import TDialog from "@/components/TDialog.vue";
+import TCard from "@/components/TCard.vue";
+import TTextField from "@/components/TTextField.vue";
+import TSpacer from "@/components/TSpacer.vue";
+import TForm from "@/components/TForm.vue";
 
 @Component({
-  components: { ResultPreview, TButton, TCol, TRow, TContainer }
+  components: {
+    TForm,
+    TSpacer,
+    TTextField,
+    TCard,
+    TDialog,
+    ResultPreview,
+    TButton,
+    TCol,
+    TRow,
+    TContainer
+  }
 })
 export default class RecordingPane extends Vue {
   private webcamPosition: ElementPosition | null = null;
   private recorder: Recorder | null = null;
   private resultBlob: Blob | null = null;
   private containerWidth: number | null = null;
+  private countdownDialogOpen = false;
+  private countdownSecondsStr = "";
+  private countdownValid = true;
+  private currentCountdown: number | null = null;
 
   @Prop()
   private readonly webcamStream!: MediaStream | null;
@@ -73,6 +149,13 @@ export default class RecordingPane extends Vue {
       return null;
     }
     return URL.createObjectURL(this.resultBlob);
+  }
+
+  private get countdownSeconds() {
+    if (this.countdownSecondsStr === "") {
+      return 0;
+    }
+    return parseInt(this.countdownSecondsStr);
   }
 
   private get screenshareDimensions() {
@@ -113,23 +196,43 @@ export default class RecordingPane extends Vue {
       this.recorder.stopRecording();
       this.recorder = null;
     } else {
-      this.resultBlob = null;
-      this.recorder = new Recorder({
-        webcamLocation: this.webcamPosition || {
-          x: 0,
-          y: 0,
-          width: 0,
-          height: 0
-        },
-        screenSize: this.canvasSize,
-        screenStream: this.screenshare || undefined,
-        webcamStream: this.webcamStream || undefined,
-        finishCallback: blob => (this.resultBlob = blob || null),
-        streamToFile: this.streamToFile,
-        audioTracks: this.audioTracks
-      });
-      this.recorder.startRecording();
+      if (this.countdownSeconds === 0) {
+        this.startRecordingImmediately();
+        return;
+      }
+
+      this.currentCountdown = this.countdownSeconds;
+
+      const timer = setInterval(() => {
+        if (this.currentCountdown) {
+          this.currentCountdown -= 1;
+        }
+        if (this.currentCountdown === null || this.currentCountdown === 0) {
+          clearInterval(timer);
+          this.startRecordingImmediately();
+          this.currentCountdown = null;
+        }
+      }, 1000);
     }
+  }
+
+  private startRecordingImmediately() {
+    this.resultBlob = null;
+    this.recorder = new Recorder({
+      webcamLocation: this.webcamPosition || {
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0
+      },
+      screenSize: this.canvasSize,
+      screenStream: this.screenshare || undefined,
+      webcamStream: this.webcamStream || undefined,
+      finishCallback: blob => (this.resultBlob = blob || null),
+      streamToFile: this.streamToFile,
+      audioTracks: this.audioTracks
+    });
+    this.recorder.startRecording();
   }
 
   private get canvasSize() {
@@ -156,6 +259,14 @@ export default class RecordingPane extends Vue {
     }
   }
 
+  private ruleIsNumber(input: string) {
+    // Allow leaving it empty
+    if (!input) {
+      return null;
+    }
+    return Number.isNaN(parseInt(input)) ? "Must be a number" : null;
+  }
+
   private mounted() {
     this.updateContainerSize();
   }
@@ -168,3 +279,10 @@ export default class RecordingPane extends Vue {
   }
 }
 </script>
+
+<style scoped>
+.highlighted-link {
+  border-bottom: 2px dotted var(--color-primary);
+  font-weight: bold;
+}
+</style>
