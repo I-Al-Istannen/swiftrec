@@ -1,5 +1,19 @@
 <template>
   <t-container fluid ref="root" no-gutter>
+    <t-row v-if="!screenshare && !webcamStream" class="mt-6">
+      <t-col cols="12" style="text-align: center">
+        <em>Nothing found I could record.</em>
+      </t-col>
+      <t-col class="mt-1">
+        <t-button
+          color="warning"
+          @click="restart"
+          title="Brings you back to the home screen"
+        >
+          <strong>[Go back]</strong>
+        </t-button>
+      </t-col>
+    </t-row>
     <t-row v-if="screenshare || webcamStream" no-gutters>
       <t-col v-if="!recorder">
         <t-dialog v-model="countdownDialogOpen" width="500">
@@ -20,7 +34,7 @@
                 <t-form v-model="countdownValid">
                   <t-text-field
                     v-model="countdownSecondsStr"
-                    :rules="[ruleIsNumber]"
+                    :rules="[ruleIsPositiveNumber]"
                     placeholder="Countdown in seconds"
                   ></t-text-field>
                 </t-form>
@@ -80,7 +94,7 @@
     <t-row no-gutters>
       <t-col>
         <result-preview
-          v-if="containerWidth"
+          v-if="containerWidth && screenshareDimensions"
           :canvas-size="canvasSize"
           :screenshare-size="screenshareDimensions"
           :screenshare-stream="screenshare"
@@ -173,7 +187,7 @@ export default class RecordingPane extends Vue {
       width = streamDimensions(this.webcamStream).width;
       height = streamDimensions(this.webcamStream).height;
     } else {
-      throw Error(":(");
+      return null;
     }
 
     const newWidth = this.containerWidth;
@@ -241,10 +255,13 @@ export default class RecordingPane extends Vue {
     } else if (this.webcamStream) {
       return streamDimensions(this.webcamStream);
     }
-    throw Error(":(");
+    return null;
   }
 
   private updateContainerSize() {
+    if (!this.canvasSize) {
+      return null;
+    }
     const { width } = this.canvasSize;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const root = (this.$refs["root"] as any).$el as HTMLElement;
@@ -259,12 +276,16 @@ export default class RecordingPane extends Vue {
     }
   }
 
-  private ruleIsNumber(input: string) {
+  private ruleIsPositiveNumber(input: string) {
     // Allow leaving it empty
     if (!input) {
       return null;
     }
-    return Number.isNaN(parseInt(input)) ? "Must be a number" : null;
+    const number = parseInt(input);
+    if (Number.isNaN(number)) {
+      return "Must be a number";
+    }
+    return number >= 0 ? null : "Must be positive";
   }
 
   private mounted() {
