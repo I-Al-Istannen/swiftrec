@@ -231,6 +231,9 @@ export default class RecordingPane extends Vue {
   }
 
   private startRecordingImmediately() {
+    if (!this.canvasSize) {
+      return;
+    }
     this.resultBlob = null;
     this.recorder = new Recorder({
       webcamLocation: this.webcamPosition || {

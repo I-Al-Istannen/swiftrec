@@ -27,7 +27,12 @@
               <t-row align-left wrap>
                 <t-col cols="12">
                   <t-checkbox v-model="streamToFile">
-                    Stream video to file
+                    <div style="display: flex; flex-direction: column">
+                      Stream video to file
+                      <span style="color: dimgray; font-size: 0.95rem">
+                        (Allows longer videos)
+                      </span>
+                    </div>
                   </t-checkbox>
                 </t-col>
               </t-row>
@@ -56,7 +61,7 @@
                     "
                     :rules="[sourceSelected]"
                   >
-                    Share your screen
+                    Record your screen
                   </t-checkbox>
                 </t-col>
               </t-row>
