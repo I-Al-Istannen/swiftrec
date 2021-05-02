@@ -1,24 +1,5 @@
-# recorder
+# SwiftRec
 
-## Project setup
-```
-yarn install
-```
-
-### Compiles and hot-reloads for development
-```
-yarn serve
-```
-
-### Compiles and minifies for production
-```
-yarn build
-```
-
-### Lints and fixes files
-```
-yarn lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+Swiftrec allows you to capture videos for presentations or small demos right
+from your browser - while still allowing you to overlay your webcam and
+position it whereever you want.
