@@ -1,1 +1,13 @@
-/home/i_al_istannen/Programming/Uni/kit-calendar/frontend/src/shims-t-vue.d.ts
+// 1. Make sure to import 'vue' before declaring augmented types
+// noinspection ES6UnusedImports
+import Vue from "vue";
+import { Breakpoints } from "@/util/Breakpoints";
+
+// 2. Specify a file with the types you want to augment
+//    Vue has the constructor type in types/vue.d.ts
+declare module "vue/types/vue" {
+  // 3. Declare augmentation for Vue
+  interface Vue {
+    readonly $breakpoints: Breakpoints;
+  }
+}
